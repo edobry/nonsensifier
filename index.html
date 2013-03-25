@@ -10,18 +10,18 @@
 		<span id="results"></span>
 		<script>
 			function getWords(letter, length, callback){
-				$.get("localhost:8080/www.wordbyletter.com/words_starting_with.php",
-					{
-						q:letter,
-						letters:length
-					}, callback);
+				$.getJSON("http://localhost:8080/www.wordbyletter.com/words_starting_with.php",
+					{ q: letter, letters: length }, callback);
 			}
 
 			$(function(){
 				$("#submit").click(function() {
 					var word = $("#sentence").val();
 					getWords(word[0], word.length, function(response) {
-						$("#results").text(response);
+						var replacement = $.grep(response[word.length], function(elem, i){
+							return elem[elem.length-1] == word[word.length-1];
+						});
+						$("#results").text(replacement[Math.floor(Math.random()*replacement.length)]);
 					});
 				})
 				

@@ -43,10 +43,10 @@ http.createServer(function(proxyReq, proxyResp) {
     };
 
     var req = http.request(reqOptions, function(res) {
-        var headers = res.headers;
-        headers['Access-Control-Allow-Origin'] = '*';
-        headers['Access-Control-Allow-Headers'] = 'X-Requested-With';
-        proxyResp.writeHead(200, headers);
+        // var headers = res.headers;
+        // headers['Access-Control-Allow-Origin'] = '*';
+        // headers['Access-Control-Allow-Headers'] = 'X-Requested-With';
+        // proxyResp.writeHead(200, headers);
 
         var page = "";
         res.on('data', function(chunk) {
@@ -54,11 +54,7 @@ http.createServer(function(proxyReq, proxyResp) {
         });
 
         res.on('end', function() {
-            console.log(processPage(page));
-            //console.log(strings);
-            /*;*/
-            //console.log(strings);
-            //proxyResp.end(strings[0]);
+            proxyResp.end(JSON.stringify(processPage(page), null, 4));
         });
     });
 
