@@ -1,0 +1,31 @@
+<html>
+	<head>
+		<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+	</head>
+	<body>
+		<h1>Nonsensifier</h1>
+		<input type="text" id="sentence" placeholder="Enter your sentence" />
+		<input type="button" id="submit" />
+		<br/><br/>
+		<span id="results"></span>
+		<script>
+			function getWords(letter, length, callback){
+				$.get("localhost:8080/www.wordbyletter.com/words_starting_with.php",
+					{
+						q:letter,
+						letters:length
+					}, callback);
+			}
+
+			$(function(){
+				$("#submit").click(function() {
+					var word = $("#sentence").val();
+					getWords(word[0], word.length, function(response) {
+						$("#results").text(response);
+					});
+				})
+				
+			});
+		</script>
+	</body>
+</html>
