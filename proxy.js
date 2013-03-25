@@ -1,46 +1,73 @@
 var http = require('http'),
     url = require('url'),
-    static = require('node-static');
+    static = require('node-static'),
+    $ = require("jquery"),
+    S = require("string");
 
 var fileServer = new static.Server('./');
 
 http.createServer(function(proxyReq, proxyResp) {
-  var URL = proxyReq.url.substr(proxyReq.url.indexOf("/")+1, proxyReq.url.length);
-  console.log(URL);
+    function processPage(page) {
+        var div = $(page).find("div").filter(function() {
+            return $(this).attr("style") == "width: 728px;";
+        });
 
-  if(URL.length == 0) fileServer.serveFile('/index.html', 200, {}, proxyReq, proxyResp);
+        var nodes = div.contents().not("h2, h3, hr, p").filter(function() {
+            return this.textContent[0] == destParams.query['q'];
+        }).toArray();
 
-  var destParams = url.parse("http://" + URL);
-  console.log(destParams.query);
+        var words = {};
+        $.each(nodes, function(i, elem) {
+            var tempArr = S(elem.textContent).trim().chompRight(',').split(", ");
+            words[tempArr[0].length] = tempArr;
+        });
 
-  var reqOptions = {
-      host : destParams.host,
-      port : 80,
-      path : destParams.path,
-      method : "GET"
-  };
+        return words;
+    }
 
-  var req = http.request(reqOptions, function(res) {
-      var headers = res.headers;
-      headers['Access-Control-Allow-Origin'] = '*';
-      headers['Access-Control-Allow-Headers'] = 'X-Requested-With';
-      proxyResp.writeHead(200, headers);
+    var URL = proxyReq.url.substr(proxyReq.url.indexOf("/") + 1, proxyReq.url.length);
+    console.log(URL);
 
-      res.on('data', function(chunk) {
-          proxyResp.write(chunk);
-      });
+    if (URL.length == 0) {
+        fileServer.serveFile('/index.html', 200, {}, proxyReq, proxyResp);
+        return;
+    }
 
-      res.on('end', function() {
-          proxyResp.end();
-      });
-  });
+    var destParams = url.parse("http://" + URL, true);
 
-  req.on('error', function(e) {
-      console.log('An error occured: ' + e.message);
-      proxyResp.writeHead(503);
-      proxyResp.write("Error!");
-      proxyResp.end();
-  });
-  req.end();
+    var reqOptions = {
+        host: destParams.host,
+        port: 80,
+        path: destParams.path,
+        method: "GET"
+    };
+
+    var req = http.request(reqOptions, function(res) {
+        var headers = res.headers;
+        headers['Access-Control-Allow-Origin'] = '*';
+        headers['Access-Control-Allow-Headers'] = 'X-Requested-With';
+        proxyResp.writeHead(200, headers);
+
+        var page = "";
+        res.on('data', function(chunk) {
+            page += chunk;
+        });
+
+        res.on('end', function() {
+            console.log(processPage(page));
+            //console.log(strings);
+            /*;*/
+            //console.log(strings);
+            //proxyResp.end(strings[0]);
+        });
+    });
+
+    req.on('error', function(e) {
+        console.log('An error occured: ' + e.message);
+        proxyResp.writeHead(503);
+        proxyResp.write("Error!");
+        proxyResp.end();
+    });
+    req.end();
 
 }).listen(8080);
